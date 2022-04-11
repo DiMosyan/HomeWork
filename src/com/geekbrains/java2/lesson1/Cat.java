@@ -1,6 +1,6 @@
 package com.geekbrains.java2.lesson1;
 
-public class Cat implements Running, Jumpable, AbleRecognizeObstacle{
+public class Cat implements Players, AbleRecognizeObstacle{
     private String name;
     private int endurance = 20000;
     private int jumpingAbility = 10000;

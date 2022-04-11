@@ -1,6 +1,6 @@
 package com.geekbrains.java2.lesson1;
 
-public class Robot implements Running, Jumpable, AbleRecognizeObstacle{
+public class Robot implements Players, AbleRecognizeObstacle{
     private String name;
     private int endurance = 100000;
     private int jumpingAbility = 50000;

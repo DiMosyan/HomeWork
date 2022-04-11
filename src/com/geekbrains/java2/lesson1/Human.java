@@ -1,6 +1,6 @@
 package com.geekbrains.java2.lesson1;
 
-public class Human implements Running, Jumpable, AbleRecognizeObstacle{
+public class Human implements Players, AbleRecognizeObstacle{
     private String name;
     private int endurance = 42195;
     private int jumpingAbility = 5000;
