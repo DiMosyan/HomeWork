@@ -9,12 +9,6 @@ import java.util.Scanner;
 public class Client {
     private final String SERVER_ADDR = "localhost";
     private final int PORT = 8189;
-    private Socket socket;
-    private DataInputStream in;
-    private DataOutputStream out;
-    private String messageToServer;
-    private String messageFromServer;
-    private Scanner sc = new Scanner(System.in);
 
     public static void main(String[] args) {
         Client client = new Client();
@@ -23,9 +17,9 @@ public class Client {
 
     public void start() {
         try {
-            socket = new Socket(SERVER_ADDR, PORT);
-            in = new DataInputStream(socket.getInputStream());
-            out = new DataOutputStream(socket.getOutputStream());
+            Socket socket = new Socket(SERVER_ADDR, PORT);
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
             receiveMessage(in);
             sendMessage(out);
@@ -36,6 +30,9 @@ public class Client {
     }
 
     private void sendMessage(DataOutputStream out) {
+        String messageToServer;
+        Scanner sc = new Scanner(System.in);
+
         try {
             while (true) {
                 messageToServer = sc.nextLine();
@@ -55,6 +52,8 @@ public class Client {
 
     private void receiveMessage(DataInputStream in) {
         Thread receiveThread = new Thread(new Runnable() {
+            String messageFromServer;
+
             @Override
             public void run() {
 

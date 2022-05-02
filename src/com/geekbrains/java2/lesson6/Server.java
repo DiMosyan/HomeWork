@@ -9,9 +9,6 @@ import java.util.Scanner;
 
 public class Server {
     private final int PORT = 8189;
-    private Scanner sc = new Scanner(System.in);
-    private String messageToClient;
-    private String messageFromClient;
 
     public static void main(String[] args) {
         Server server = new Server();
@@ -38,9 +35,13 @@ public class Server {
     }
 
     private void sendMessage(DataOutputStream out) {
+        Scanner sc = new Scanner(System.in);
+
         Thread sendThread = new Thread(new Runnable() {
             @Override
             public void run() {
+                String messageToClient;
+
                 try {
                     while (true) {
                         messageToClient = sc.nextLine();
@@ -59,6 +60,8 @@ public class Server {
     }
 
     private void receiveMessage(DataInputStream in) {
+        String messageFromClient;
+
         try {
             while (true) {
                 messageFromClient = in.readUTF();
