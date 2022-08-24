@@ -1,4 +1,4 @@
-package com.example.lesson7;
+package com.MyChat.server;
 
 public class ServerStart {
     public static void main(String[] args) {

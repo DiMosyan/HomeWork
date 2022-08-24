@@ -1,4 +1,4 @@
-package com.example.lesson7;
+package com.MyChat.server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
