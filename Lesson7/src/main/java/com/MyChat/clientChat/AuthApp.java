@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Timer;
 
 public class AuthApp extends Application {
 
@@ -27,6 +28,10 @@ public class AuthApp extends Application {
         authController.connecting();
 
         stage.show();
+
+        MyTimerTask timerTask = new MyTimerTask();
+        Timer timer = new Timer(true);
+        timer.schedule(timerTask, 0);
 
         stage.setOnCloseRequest(windowEvent -> authController.disconnected());
     }
