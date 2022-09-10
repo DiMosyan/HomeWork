@@ -1,15 +1,16 @@
 package com.MyChat.server;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import com.MyChat.command.*;
+import com.MyChat.command.commands.*;
+
+import java.io.*;
 import java.net.Socket;
 
 public class ClientHandler {
     private MyServer server;
     private Socket socket;
-    private DataInputStream in;
-    private DataOutputStream out;
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
     private String name;
 
     public String getName() {
@@ -20,26 +21,27 @@ public class ClientHandler {
         this.server = server;
         this.socket = socket;
         try {
-            in = new DataInputStream(socket.getInputStream());
-            out = new DataOutputStream(socket.getOutputStream());
+            in = new ObjectInputStream(socket.getInputStream());
+            out = new ObjectOutputStream(socket.getOutputStream());
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    auth();
-                    sendMessage(getNicksOfEntries());
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                readMessage();
-                            } catch (IOException e) {
-                                System.err.println("Read message is wrong");
-                                e.printStackTrace();
-                            } finally {
-                                closeConnection();
+                    if(isAuth()) {
+                        sendCommand(getNicksOfEntries());
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    readMessage();
+                                } catch (IOException e) {
+                                    System.err.println("Read message is wrong");
+                                    e.printStackTrace();
+                                } /*finally {
+                                    closeConnection();
+                                }*/
                             }
-                        }
-                    }).start();
+                        }).start();
+                    }
                 }
             }).start();
         } catch (IOException e) {
@@ -47,61 +49,95 @@ public class ClientHandler {
         }
     }
 
-    private void auth() {
+    private boolean isAuth() {
         try {
             while (true) {
-                String authStr = in.readUTF();
-                if (authStr.startsWith("/auth")) {
-                    String[] partsOfAuthStr = authStr.split(" ");
-                    String nick = server.getAuthService().getNick(partsOfAuthStr[1], partsOfAuthStr[2]);
+                Command command = readCommand();
+                if(command == null) {
+                    continue;
+                }
+                if(command.getType() == CommandType.AUTH) {
+                    AuthCommandData authCommandData = (AuthCommandData) command.getData();
+                    String nick = server.getAuthService().getNick(authCommandData.getLogin(), authCommandData.getPassword());
                     if(nick != null) {
                         if(server.isNickBusy(nick)) {
-                            sendMessage("Account is busy");
+                            sendCommand(Command.errorCommand("Account is busy"));
                         } else {
-                            sendMessage("/authIsOk " + nick);
-                            name = nick;
+                            sendCommand(Command.authOkCommand(nick));
+                            this.name = nick;
                             server.addClient(this);
-                            server.broadcastMessage("/con " + nick + " connected" + System.lineSeparator(), nick);
-                            return;
+                            sendCommand(server.getNicksOfEntries());
+                            server.updateUserList(this, Command.userListUpdateCommand(this.name, UserListUpdateCommandData.UserListUpdateType.ADD));
+                            return true;
                         }
                     } else {
-                        sendMessage("Login/password is wrong");
+                        sendCommand(Command.errorCommand("Login/password is wrong"));
                     }
                 } else {
-                    sendMessage("Command is wrong");
+                    if(command.getType() == CommandType.DISCONNECT) {
+                        closeConnection();
+                    } else {
+                        sendCommand(Command.errorCommand("Command is wrong"));
+                    }
+                    return false;
                 }
             }
         } catch (IOException e) {
             System.err.println("error in the authorization block");
             e.printStackTrace();
+            return false;
         }
     }
 
-    public void sendMessage(String message) {
+    public void sendCommand(Command command) {
         try {
-            out.writeUTF(message);
+            out.writeObject(command);
         } catch (IOException e) {
-            System.err.println("Send message is wrong");
+            System.err.println("Send command is wrong");
             e.printStackTrace();
         }
     }
 
-    private String getNicksOfEntries() {
+    private Command getNicksOfEntries() {
         return server.getNicksOfEntries();
     }
 
     private void readMessage() throws IOException{
-        String messageOfClient;
-
         while(true) {
-            messageOfClient = in.readUTF();
-            if(messageOfClient.equals("/end")) {
-                sendMessage("/end");
-                server.broadcastMessage(name + ": disconnected", name);
-                return;
+            Command command = readCommand();
+            if(command == null) {
+                continue;
             }
-            server.sendMessage(messageOfClient);
+            switch (command.getType()) {
+                case PRIVATE_MESSAGE: {
+                    PrivateMessageCommandData data = (PrivateMessageCommandData) command.getData();
+                    server.sendMessage(this, data.getReceiver(), data.getMessage());
+                    break;
+                }
+                case PUBLIC_MESSAGE: {
+                    PublicMessageCommandData data = (PublicMessageCommandData) command.getData();
+                    server.broadcastMessage(this, data.getMessage());
+                    break;
+                }
+                case DISCONNECT: {
+                    server.updateUserList(this, Command.userListUpdateCommand(this.name, UserListUpdateCommandData.UserListUpdateType.DEL));
+                    sendCommand(command);
+                    closeConnection();
+                    return;
+                }
+            }
         }
+    }
+
+    private Command readCommand() throws IOException {
+        Command command = null;
+        try {
+            command = (Command) in.readObject();
+        } catch (ClassNotFoundException e) {
+            System.err.println("Failed to read Command");
+            e.printStackTrace();
+        }
+        return command;
     }
 
     private void closeConnection() {
@@ -109,7 +145,7 @@ public class ClientHandler {
         try {
             in.close();
             out.close();
-            socket.close();
+            //socket.close();
         } catch (IOException e) {
             System.err.println("Disconnecting is wrong");
             e.printStackTrace();

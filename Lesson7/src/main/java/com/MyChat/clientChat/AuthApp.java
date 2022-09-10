@@ -1,5 +1,6 @@
-package com.example.lesson7;
+package com.MyChat.clientChat;
 
+import com.MyChat.clientChat.controllers.AuthController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -9,8 +10,14 @@ import java.io.IOException;
 
 public class AuthApp extends Application {
 
+    private Stage authStage;
+    private static AuthApp INSTANCE;
+
     @Override
     public void start(Stage stage) throws IOException {
+
+        this.authStage = stage;
+
         FXMLLoader fxmlLoader = new FXMLLoader(AuthApp.class.getResource("AuthApp-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
         stage.setScene(scene);
@@ -20,6 +27,21 @@ public class AuthApp extends Application {
         authController.connecting();
 
         stage.show();
+
+        stage.setOnCloseRequest(windowEvent -> authController.disconnected());
+    }
+
+    @Override
+    public void init() {
+        INSTANCE = this;
+    }
+
+    public static AuthApp getInstance() {
+        return INSTANCE;
+    }
+
+    public Stage getAuthStage() {
+        return authStage;
     }
 
     public static void main(String[] args) {

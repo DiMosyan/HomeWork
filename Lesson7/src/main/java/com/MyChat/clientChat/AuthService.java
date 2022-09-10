@@ -1,4 +1,4 @@
-package com.example.lesson7;
+package com.MyChat.clientChat;
 
 import java.util.ArrayList;
 import java.util.List;
