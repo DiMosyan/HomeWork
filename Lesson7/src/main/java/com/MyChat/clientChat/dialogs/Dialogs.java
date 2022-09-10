@@ -7,7 +7,8 @@ public class Dialogs {
     public enum ErrorType {
         AUTH_ERROR("Authorization error!"),
         NET_ERROR("Network error!"),
-        UNK_ERROR("Unknown error!");
+        UNK_ERROR("Unknown error!"),
+        AUTH_TIMEOUT("Time for authentication is over");
 
         private final String type;
 

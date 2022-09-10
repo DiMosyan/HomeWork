@@ -42,11 +42,15 @@ public class AuthController {
     private ObjectOutputStream out;
     private boolean connected = false;
 
+    private static AuthController INSTANCE;
+    private boolean isAuthOk = false;
+
     public void setStage(Stage stage) {
         this.stage = stage;
     }
 
     public void connecting() {
+        INSTANCE = this;
         try {
             socket = new Socket(SERVER_ADDR, PORT);
             out = new ObjectOutputStream(socket.getOutputStream());
@@ -96,6 +100,7 @@ public class AuthController {
                 AuthOkCommandData data = (AuthOkCommandData) answer.getData();
                 ChatApp chatApp = new ChatApp(data.getUserName(), socket, in, out);
                 chatApp.start(stage);
+                isAuthOk = true;
             } else {
                 loginField.setText("");
                 passwordField.setText("");
@@ -126,5 +131,20 @@ public class AuthController {
             System.err.println("Closing is wrong");
             e.printStackTrace();
         }
+    }
+
+    public static AuthController getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new AuthController();
+        }
+        return INSTANCE;
+    }
+
+    public boolean getIsAuthOk() {
+        return isAuthOk;
+    }
+
+    public Stage getStage() {
+        return stage;
     }
 }

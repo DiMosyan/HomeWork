@@ -1,4 +1,4 @@
-package com.MyChat.clientChat;
+package com.MyChat.server;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,14 +9,14 @@ public class AuthService {
         String password;
         String nick;
 
-        public Entry(String login, String password, String nick) {
+        private Entry(String login, String password, String nick) {
             this.login = login;
             this.password = password;
             this.nick = nick;
         }
     }
 
-    private List<Entry> entries;
+    private final List<Entry> entries;
 
     public AuthService() {
         entries = new ArrayList<>();

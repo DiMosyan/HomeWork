@@ -1,6 +1,5 @@
 package com.MyChat.server;
 
-import com.MyChat.clientChat.AuthService;
 import com.MyChat.command.Command;
 
 import java.io.IOException;
