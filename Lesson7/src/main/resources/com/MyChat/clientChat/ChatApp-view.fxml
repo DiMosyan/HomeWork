@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.lesson7.ChatController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.MyChat.clientChat.controllers.ChatController">
    <top>
       <Label prefHeight="35.0" prefWidth="166.0" text="Online Chat GeekBrains" textAlignment="CENTER" BorderPane.alignment="CENTER">
          <font>
@@ -39,12 +39,12 @@
                   <Insets left="5.0" />
                </HBox.margin>
             </Label>
-            <TextField fx:id="messageField" maxWidth="1.7976931348623157E308" onAction="#sendMessage" prefHeight="25.0" prefWidth="455.0">
+            <TextField fx:id="messageField" maxWidth="1.7976931348623157E308" onAction="#sendPrivateMessage" prefHeight="25.0" prefWidth="455.0">
                <HBox.margin>
                   <Insets left="5.0" right="10.0" />
                </HBox.margin>
             </TextField>
-            <Button fx:id="sendButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#sendMessage" prefHeight="25.0" prefWidth="88.0" text="Send">
+            <Button fx:id="sendButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#sendPrivateMessage" prefHeight="25.0" prefWidth="88.0" text="Send">
                <HBox.margin>
                   <Insets right="7.0" />
                </HBox.margin></Button>

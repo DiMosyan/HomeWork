@@ -1,6 +1,7 @@
 package com.MyChat.server;
 
-import com.example.lesson7.AuthService;
+import com.MyChat.clientChat.AuthService;
+import com.MyChat.command.Command;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -39,10 +40,19 @@ public class MyServer {
         return false;
     }
 
-    public synchronized void broadcastMessage(String message, String sender) {
-        for (ClientHandler c :
-                clients) {
-            if(!c.getName().equals(sender)) c.sendMessage(message);
+    public synchronized void broadcastMessage(ClientHandler sender, String message) {
+        for(ClientHandler client : clients) {
+            if(client != sender) {
+                client.sendCommand(Command.publicMessageCommand(message, sender.getName()));
+            }
+        }
+    }
+
+    public synchronized void updateUserList(ClientHandler sender, Command command) {
+        for(ClientHandler client : clients) {
+            if(client != sender) {
+                client.sendCommand(command);
+            }
         }
     }
 
@@ -50,22 +60,23 @@ public class MyServer {
         clients.add(client);
     }
 
-    public synchronized String getNicksOfEntries() {
-        String nicks = "/entries ";
-        for (ClientHandler c :
-                clients) {
-            nicks += (c.getName() + " ");
+    public synchronized Command getNicksOfEntries() {
+        List<String> clientsNames = new ArrayList<>();
+        clientsNames.add("All");
+        for (ClientHandler c : clients) {
+            clientsNames.add(c.getName());
         }
 
-        return nicks;
+        return Command.userListInitCommand(clientsNames);
     }
 
-    public synchronized void sendMessage(String message) {
-        String[] partsOfMessage = message.split(" ", 2);
-        for (ClientHandler c :
-                clients) {
-            if(c.getName().equals(partsOfMessage[0])) {
-                c.sendMessage(partsOfMessage[1]);
+    public synchronized void sendMessage(ClientHandler sender, String recipient, String message) {
+        if(sender.getName().equals(recipient)) {
+            return;
+        }
+        for(ClientHandler client : clients) {
+            if(client.getName().equals(recipient)) {
+                client.sendCommand(Command.privateMessageCommand(message, recipient, sender.getName()));
             }
         }
     }
