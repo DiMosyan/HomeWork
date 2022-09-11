@@ -8,7 +8,8 @@ public class Dialogs {
         AUTH_ERROR("Authorization error!"),
         NET_ERROR("Network error!"),
         UNK_ERROR("Unknown error!"),
-        AUTH_TIMEOUT("Time for authentication is over");
+        AUTH_TIMEOUT("Time for authentication is over"),
+        DB_CONNECTION_ERROR("Data base connection error");
 
         private final String type;
 

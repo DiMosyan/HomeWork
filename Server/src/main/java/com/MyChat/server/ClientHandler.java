@@ -7,8 +7,7 @@ import java.io.*;
 import java.net.Socket;
 
 public class ClientHandler {
-    private MyServer server;
-    private Socket socket;
+    private final MyServer server;
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private String name;
@@ -19,7 +18,6 @@ public class ClientHandler {
 
     public ClientHandler(MyServer server, Socket socket) {
         this.server = server;
-        this.socket = socket;
         try {
             in = new ObjectInputStream(socket.getInputStream());
             out = new ObjectOutputStream(socket.getOutputStream());
@@ -36,9 +34,7 @@ public class ClientHandler {
                                 } catch (IOException e) {
                                     System.err.println("Read message is wrong");
                                     e.printStackTrace();
-                                } /*finally {
-                                    closeConnection();
-                                }*/
+                                }
                             }
                         }).start();
                     }
@@ -58,20 +54,21 @@ public class ClientHandler {
                 }
                 if(command.getType() == CommandType.AUTH) {
                     AuthCommandData authCommandData = (AuthCommandData) command.getData();
-                    String nick = server.getAuthService().getNick(authCommandData.getLogin(), authCommandData.getPassword());
-                    if(nick != null) {
-                        if(server.isNickBusy(nick)) {
-                            sendCommand(Command.errorCommand("Account is busy"));
+                    Command resultAuth = server.getAuthService().getNick(authCommandData.getLogin(), authCommandData.getPassword());
+                    if(resultAuth.getType() == CommandType.ERROR) {
+                        sendCommand(resultAuth);
+                    } else {
+                        AuthOkCommandData data = (AuthOkCommandData) resultAuth.getData();
+                        if(server.isNickBusy(data.getUserName())) {
+                            sendCommand(Command.errorCommand("Account is busy."));
                         } else {
-                            sendCommand(Command.authOkCommand(nick));
-                            this.name = nick;
+                            sendCommand(resultAuth);
+                            this.name = data.getUserName();
                             server.addClient(this);
                             sendCommand(server.getNicksOfEntries());
                             server.updateUserList(this, Command.userListUpdateCommand(this.name, UserListUpdateCommandData.UserListUpdateType.ADD));
                             return true;
                         }
-                    } else {
-                        sendCommand(Command.errorCommand("Login/password is wrong"));
                     }
                 } else {
                     if(command.getType() == CommandType.DISCONNECT) {
@@ -145,7 +142,6 @@ public class ClientHandler {
         try {
             in.close();
             out.close();
-            //socket.close();
         } catch (IOException e) {
             System.err.println("Disconnecting is wrong");
             e.printStackTrace();
