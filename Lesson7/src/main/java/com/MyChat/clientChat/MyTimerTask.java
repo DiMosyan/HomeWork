@@ -11,7 +11,7 @@ public class MyTimerTask extends TimerTask {
     @Override
     public void run() {
         try {
-            Thread.sleep(5000);
+            Thread.sleep(6000);
         } catch (InterruptedException e) {
             System.err.println("Timer's error");
             e.printStackTrace();
