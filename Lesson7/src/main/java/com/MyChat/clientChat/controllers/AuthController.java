@@ -1,5 +1,6 @@
 package com.MyChat.clientChat.controllers;
 
+import com.MyChat.clientChat.AuthApp;
 import com.MyChat.clientChat.ChatApp;
 import com.MyChat.clientChat.dialogs.Dialogs;
 import com.MyChat.command.Command;
@@ -8,6 +9,7 @@ import com.MyChat.command.commands.AuthOkCommandData;
 import com.MyChat.command.commands.ErrorCommandData;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -57,7 +59,7 @@ public class AuthController {
             in = new ObjectInputStream(socket.getInputStream());
             connected = true;
         } catch (IOException e) {
-            Dialogs.ErrorType.NET_ERROR.show("Failed to establish a connection with the server");
+            Dialogs.ErrorType.NET_ERROR.show(Alert.AlertType.ERROR, "Failed to establish a connection with the server");
 
             System.err.println("AuthController_ connecting");
         }
@@ -77,17 +79,18 @@ public class AuthController {
                 out.writeObject(command);
 
                 if (!connected) {
-                    Dialogs.ErrorType.NET_ERROR.show("Failed to establish a connection with the server");
+                    Dialogs.ErrorType.NET_ERROR.show(Alert.AlertType.ERROR, "Failed to establish a connection with the server");
+                    return false;
                 }
                 return true;
             } else {
-                Dialogs.ErrorType.AUTH_ERROR.show("Please, enter the data!");
+                Dialogs.ErrorType.AUTH_ERROR.show(Alert.AlertType.ERROR, "Please, enter the data!");
                 return false;
             }
         } catch (IOException e) {
             System.err.println("AuthController_isSendAuthMessage");
             e.printStackTrace();
-            Dialogs.ErrorType.NET_ERROR.show("Failed to establish a connection with the server");
+            Dialogs.ErrorType.NET_ERROR.show(Alert.AlertType.ERROR, "Failed to establish a connection with the server");
         }
         return false;
     }
@@ -106,9 +109,9 @@ public class AuthController {
                 passwordField.setText("");
                 if (answer.getType() == CommandType.ERROR) {
                     ErrorCommandData data = (ErrorCommandData) answer.getData();
-                    Dialogs.ErrorType.AUTH_ERROR.show(data.getErrorMessage());
+                    Dialogs.ErrorType.AUTH_ERROR.show(Alert.AlertType.ERROR, data.getErrorMessage());
                 } else {
-                    Dialogs.ErrorType.UNK_ERROR.show("Please contact the administrator");
+                    Dialogs.ErrorType.UNK_ERROR.show(Alert.AlertType.ERROR, "Please contact the administrator");
                 }
             }
         } catch (IOException e) {
@@ -121,7 +124,7 @@ public class AuthController {
     }
 
     public void disconnected() {
-        if(!connected) return;
+        if (!connected) return;
         try {
             out.writeObject(Command.disconnectCommand());
             in.close();
@@ -146,5 +149,40 @@ public class AuthController {
 
     public Stage getStage() {
         return stage;
+    }
+
+    public void initRegDialog(ActionEvent actionEvent) {
+        try {
+            isAuthOk = true;
+            AuthApp.getInstance().initRegDialog();
+        } catch (IOException e) {
+            System.err.println("Error displaying the registration window");
+            e.printStackTrace();
+        }
+    }
+
+    public void sendRegCommand(String nick, String login, String password) {
+        try {
+            out.writeObject(Command.regCommand(nick, login, password));
+            Command answer = (Command) in.readObject();
+            if(answer.getType() == CommandType.REGISTRATION_OK) {
+                loginField.setText("");
+                passwordField.setText("");
+                AuthApp.getInstance().closeRegDialog();
+                Dialogs.ErrorType.SUCCESS_REG.show(Alert.AlertType.INFORMATION, "You have been registered!");
+                isAuthOk = false;
+            } else if(answer.getType() == CommandType.ERROR) {
+                ErrorCommandData data = (ErrorCommandData) answer.getData();
+                Dialogs.ErrorType.REG_ERROR.show(Alert.AlertType.ERROR, data.getErrorMessage());
+            }
+        } catch (IOException e) {
+            System.err.println("Registration command sending error.");
+            Dialogs.ErrorType.SEND_COMMAND_ERROR.show(Alert.AlertType.ERROR, "Registration command sending error.");
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            System.err.println("Invalid command received");
+            e.printStackTrace();
+            Dialogs.ErrorType.REG_ERROR.show(Alert.AlertType.ERROR, "Registration command receiving error.");
+        }
     }
 }

@@ -66,6 +66,20 @@ public class Command implements Serializable {
         return command;
     }
 
+    public static Command regCommand(String nick, String login, String password) {
+        Command command = new Command();
+        command.data = new RegCommandData(nick, login, password);
+        command.type = CommandType.REGISTRATION;
+        return command;
+    }
+
+    public static Command regOkCommand() {
+        Command command = new Command();
+        command.data = new RegOkCommandData();
+        command.type = CommandType.REGISTRATION_OK;
+        return command;
+    }
+
     public Object getData() {
         return data;
     }

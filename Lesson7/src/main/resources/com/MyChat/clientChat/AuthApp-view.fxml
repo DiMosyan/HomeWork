@@ -67,7 +67,7 @@
    <bottom>
       <HBox prefHeight="25.0" prefWidth="477.0" BorderPane.alignment="CENTER">
          <children>
-            <Label fx:id="authMessage" prefHeight="39.0" prefWidth="388.0" text="Enter Login and Password and click Send">
+            <Label fx:id="authMessage" prefHeight="37.0" prefWidth="308.0" text="Enter Login and Password and click Send">
                <HBox.margin>
                   <Insets right="10.0" />
                </HBox.margin>
@@ -75,12 +75,20 @@
                   <Insets left="10.0" />
                </padding>
             </Label>
+            <Button fx:id="regButton" mnemonicParsing="false" onAction="#initRegDialog" text="Registration">
+               <HBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </HBox.margin>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </Button>
             <Button fx:id="authButton" mnemonicParsing="false" onAction="#sendAuth" prefHeight="30.0" prefWidth="64.0" text="Send">
                <padding>
                   <Insets bottom="5.0" top="5.0" />
                </padding>
                <HBox.margin>
-                  <Insets bottom="5.0" top="5.0" />
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </HBox.margin>
             </Button>
          </children>

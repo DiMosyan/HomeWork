@@ -52,7 +52,38 @@ public class ClientHandler {
                 if(command == null) {
                     continue;
                 }
-                if(command.getType() == CommandType.AUTH) {
+
+                switch (command.getType()) {
+                    case AUTH: {
+                        AuthCommandData authCommandData = (AuthCommandData) command.getData();
+                        Command resultAuth = server.getAuthService().getNick(authCommandData.getLogin(), authCommandData.getPassword());
+                        if(resultAuth.getType() == CommandType.ERROR) {
+                            sendCommand(resultAuth);
+                        } else {
+                            AuthOkCommandData data = (AuthOkCommandData) resultAuth.getData();
+                            if(server.isNickBusy(data.getUserName())) {
+                                sendCommand(Command.errorCommand("Account is busy."));
+                            } else {
+                                sendCommand(resultAuth);
+                                this.name = data.getUserName();
+                                server.addClient(this);
+                                sendCommand(server.getNicksOfEntries());
+                                server.updateUserList(this, Command.userListUpdateCommand(this.name, UserListUpdateCommandData.UserListUpdateType.ADD));
+                                return true;
+                            }
+                        }
+                        break;
+                    }
+                    case DISCONNECT: {
+                        closeConnection();
+                        return false;
+                    }
+                    case REGISTRATION: {
+                        sendCommand(server.getAuthService().resultOfReg(command));
+                        break;
+                    }
+                }
+                /*if(command.getType() == CommandType.AUTH) {
                     AuthCommandData authCommandData = (AuthCommandData) command.getData();
                     Command resultAuth = server.getAuthService().getNick(authCommandData.getLogin(), authCommandData.getPassword());
                     if(resultAuth.getType() == CommandType.ERROR) {
@@ -77,7 +108,7 @@ public class ClientHandler {
                         sendCommand(Command.errorCommand("Command is wrong"));
                     }
                     return false;
-                }
+                }*/
             }
         } catch (IOException e) {
             System.err.println("error in the authorization block");

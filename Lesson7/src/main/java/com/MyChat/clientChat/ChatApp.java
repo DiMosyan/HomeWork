@@ -31,11 +31,6 @@ public class ChatApp {
         ChatController chatController = fxmlLoader.getController();
         chatController.start(name, socket, in, out);
 
-        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent windowEvent) {
-                chatController.sendDisconnectCommand();
-            }
-        });
+        stage.setOnCloseRequest(windowEvent -> chatController.sendDisconnectCommand());
     }
 }

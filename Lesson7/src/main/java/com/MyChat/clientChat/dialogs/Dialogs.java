@@ -9,7 +9,9 @@ public class Dialogs {
         NET_ERROR("Network error!"),
         UNK_ERROR("Unknown error!"),
         AUTH_TIMEOUT("Time for authentication is over"),
-        DB_CONNECTION_ERROR("Data base connection error");
+        SEND_COMMAND_ERROR("Command sending error."),
+        REG_ERROR("Registration error!"),
+        SUCCESS_REG("Registration is success!");
 
         private final String type;
 
@@ -17,13 +19,13 @@ public class Dialogs {
             this.type = type;
         }
 
-        public void show(String message) {
-            showDialog(type, type, message);
+        public void show(Alert.AlertType alertType, String message) {
+            showDialog(alertType, type, type, message);
         }
     }
 
-    private static void showDialog(String title, String type, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+    private static void showDialog(Alert.AlertType alertType, String title, String type, String message) {
+        Alert alert = new Alert(alertType);
         alert.initOwner(AuthApp.getInstance().getAuthStage());
         alert.setTitle(title);
         alert.setHeaderText(type);

@@ -1,6 +1,8 @@
 package com.MyChat.server;
 
 import com.MyChat.command.Command;
+import com.MyChat.command.commands.RegCommandData;
+
 import java.sql.*;
 
 public class AuthService {
@@ -12,10 +14,30 @@ public class AuthService {
         try {
             connect();
             return userIdentification(login, password);
-
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             return Command.errorCommand("Data base connecting error");
+        } finally {
+            disconnect();
+        }
+    }
+
+    public Command resultOfReg(Command request) {
+        RegCommandData data = (RegCommandData) request.getData();
+        try {
+            connect();
+            if(isFieldBusy("nick", data.getNick())) return Command.errorCommand("This nick is busy.");
+            if(isFieldBusy("login", data.getLogin())) return Command.errorCommand("This login is busy.");
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO data_of_entries (nick, login, password) VALUES (?, ?, ?);");
+            ps.setString(1, data.getNick());
+            ps.setString(2, data.getLogin());
+            ps.setString(3, data.getPassword());
+            ps.executeUpdate();
+            return Command.regOkCommand();
+        } catch (SQLException | ClassNotFoundException e) {
+            System.err.println("Data base connecting error.");
+            e.printStackTrace();
+            return Command.errorCommand("Data base connecting error.");
         }
     }
 
@@ -40,6 +62,13 @@ public class AuthService {
         }
     }
 
+    private boolean isFieldBusy(String columnName, String value) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement(String.format("SELECT (%s) FROM data_of_entries WHERE %s = ?", columnName, columnName));
+        ps.setString(1, value);
+        if(ps.executeQuery().next()) return true;
+        return false;
+    }
+
     private void disconnect() {
         try {
             if(stmt != null) {
@@ -52,7 +81,6 @@ public class AuthService {
         try {
             if(connection != null) {
                 connection.close();
-                System.out.println("Database is closed");
             }
         } catch (SQLException e) {
             System.err.println("Database closing error.");

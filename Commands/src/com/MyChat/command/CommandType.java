@@ -8,5 +8,7 @@ public enum CommandType {
     PUBLIC_MESSAGE,
     USER_LIST_INIT,
     USER_LIST_UPDATE,
-    DISCONNECT
+    DISCONNECT,
+    REGISTRATION,
+    REGISTRATION_OK
 }
