@@ -62,7 +62,7 @@ public class ChatController {
         } catch (IOException e) {
             System.err.println("ChatController_sendMessage");
             e.printStackTrace();
-            Dialogs.ErrorType.NET_ERROR.show("Failed to send message");
+            Dialogs.ErrorType.NET_ERROR.show(Alert.AlertType.ERROR, "Failed to send message");
         }
     }
 
