@@ -10,8 +10,8 @@ import java.util.List;
 
 public class MyServer {
     private final int PORT = 8189;
-    private List<ClientHandler> clients = new ArrayList<>();
-    private AuthService authService = new AuthService();
+    private final List<ClientHandler> clients = new ArrayList<>();
+    private final AuthService authService = new AuthService();
 
     public AuthService getAuthService() {
         return authService;
@@ -44,6 +44,13 @@ public class MyServer {
             if(client != sender) {
                 client.sendCommand(Command.publicMessageCommand(message, sender.getName()));
             }
+        }
+    }
+
+    public synchronized void broadcastMessage(Command command) {
+        for (ClientHandler client :
+                clients) {
+            client.sendCommand(command);
         }
     }
 

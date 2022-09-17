@@ -1,6 +1,7 @@
 package com.MyChat.server;
 
 import com.MyChat.command.Command;
+import com.MyChat.command.commands.ChangeUserDataCommandData;
 import com.MyChat.command.commands.RegCommandData;
 
 import java.sql.*;
@@ -8,7 +9,6 @@ import java.sql.*;
 public class AuthService {
 
     private Connection connection;
-    private Statement stmt;
     
     public Command getNick(String login, String password) {
         try {
@@ -35,15 +35,49 @@ public class AuthService {
             ps.executeUpdate();
             return Command.regOkCommand();
         } catch (SQLException | ClassNotFoundException e) {
-            System.err.println("Data base connecting error.");
-            e.printStackTrace();
-            return Command.errorCommand("Data base connecting error.");
+            return dataConnectingError(e);
         }
+    }
+
+    public Command resultOfChangeData(ChangeUserDataCommandData data) {
+        String columnName;
+
+        try {
+            connect();
+            switch (data.getType()) {
+                case NICK -> {
+                    columnName = "nick";
+                    if(isFieldBusy(columnName, data.getValue())) return Command.errorCommand("This nickname is busy!");
+                }
+                case LOGIN -> {
+                    columnName = "login";
+                    if(isOldField(columnName, data.getValue(), data.getCurrentNick())) return Command.errorCommand("The new login is the same as the old one.");
+                    if(isFieldBusy(columnName, data.getValue())) return Command.errorCommand("This login is busy!");
+                }
+                case PASSWORD -> {
+                    columnName = "password";
+                    if(isOldField(columnName, data.getValue(), data.getCurrentNick())) return Command.errorCommand("The new password is the same as the old one.");
+                }
+                default -> {
+                    return Command.errorCommand("Type of command error.");
+                }
+            }
+            PreparedStatement ps = connection.prepareStatement(
+                    String.format("UPDATE data_of_entries SET %s = ? WHERE nick = '%s';", columnName, data.getCurrentNick()));
+            ps.setString(1, data.getValue());
+            ps.executeUpdate();
+        } catch (SQLException | ClassNotFoundException e) {
+            return dataConnectingError(e);
+        } finally {
+            disconnect();
+        }
+
+        if(columnName.equals("nick")) return Command.changeNickSucCommand(data.getCurrentNick(), data.getValue());
+        else return Command.regOkCommand();
     }
 
     private void connect() throws SQLException, ClassNotFoundException {
         connection = DriverManager.getConnection("jdbc:sqlite:entries.db");
-        stmt = connection.createStatement();
     }
 
     private Command userIdentification(String login, String password) throws SQLException {
@@ -69,15 +103,15 @@ public class AuthService {
         return false;
     }
 
+    private boolean isOldField(String columnName, String value, String nick) throws SQLException{
+        PreparedStatement ps = connection.prepareStatement(String.format("SELECT (%s) FROM data_of_entries WHERE nick = ?", columnName));
+        ps.setString(1, nick);
+        ResultSet rs = ps.executeQuery();
+        rs.next();
+        return rs.getString(1).equals(value);
+    }
+
     private void disconnect() {
-        try {
-            if(stmt != null) {
-                stmt.close();
-            }
-        } catch (SQLException e) {
-            System.err.println("Statement closing error");
-            e.printStackTrace();
-        }
         try {
             if(connection != null) {
                 connection.close();
@@ -88,15 +122,9 @@ public class AuthService {
         }
     }
 
-    private void readEx() throws SQLException {
-        ResultSet rs = stmt.executeQuery("SELECT * FROM data_of_entries;");
-        while(rs.next()) {
-            System.out.println(String.format("%d %s %s %s", rs.getInt(1), rs.getString("nick"),
-                    rs.getString(3), rs.getString(4)));
-        }
-    }
-
-    private void insertEx() throws SQLException {
-        stmt.executeUpdate("INSERT INTO data_of_entries (nick, login, password) VALUES ('nick4', 'login4', 'pass4')");
+    private Command dataConnectingError (Exception e) {
+        System.err.println("Data base connecting error.");
+        e.printStackTrace();
+        return Command.errorCommand("Data base connecting error.");
     }
 }

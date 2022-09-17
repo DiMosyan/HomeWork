@@ -25,7 +25,7 @@ public class ClientHandler {
                 @Override
                 public void run() {
                     if(isAuth()) {
-                        sendCommand(getNicksOfEntries());
+                        //sendCommand(getNicksOfEntries());
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -83,32 +83,6 @@ public class ClientHandler {
                         break;
                     }
                 }
-                /*if(command.getType() == CommandType.AUTH) {
-                    AuthCommandData authCommandData = (AuthCommandData) command.getData();
-                    Command resultAuth = server.getAuthService().getNick(authCommandData.getLogin(), authCommandData.getPassword());
-                    if(resultAuth.getType() == CommandType.ERROR) {
-                        sendCommand(resultAuth);
-                    } else {
-                        AuthOkCommandData data = (AuthOkCommandData) resultAuth.getData();
-                        if(server.isNickBusy(data.getUserName())) {
-                            sendCommand(Command.errorCommand("Account is busy."));
-                        } else {
-                            sendCommand(resultAuth);
-                            this.name = data.getUserName();
-                            server.addClient(this);
-                            sendCommand(server.getNicksOfEntries());
-                            server.updateUserList(this, Command.userListUpdateCommand(this.name, UserListUpdateCommandData.UserListUpdateType.ADD));
-                            return true;
-                        }
-                    }
-                } else {
-                    if(command.getType() == CommandType.DISCONNECT) {
-                        closeConnection();
-                    } else {
-                        sendCommand(Command.errorCommand("Command is wrong"));
-                    }
-                    return false;
-                }*/
             }
         } catch (IOException e) {
             System.err.println("error in the authorization block");
@@ -126,10 +100,6 @@ public class ClientHandler {
         }
     }
 
-    private Command getNicksOfEntries() {
-        return server.getNicksOfEntries();
-    }
-
     private void readMessage() throws IOException{
         while(true) {
             Command command = readCommand();
@@ -137,21 +107,27 @@ public class ClientHandler {
                 continue;
             }
             switch (command.getType()) {
-                case PRIVATE_MESSAGE: {
+                case PRIVATE_MESSAGE -> {
                     PrivateMessageCommandData data = (PrivateMessageCommandData) command.getData();
                     server.sendMessage(this, data.getReceiver(), data.getMessage());
-                    break;
                 }
-                case PUBLIC_MESSAGE: {
+                case PUBLIC_MESSAGE -> {
                     PublicMessageCommandData data = (PublicMessageCommandData) command.getData();
                     server.broadcastMessage(this, data.getMessage());
-                    break;
                 }
-                case DISCONNECT: {
+                case DISCONNECT -> {
                     server.updateUserList(this, Command.userListUpdateCommand(this.name, UserListUpdateCommandData.UserListUpdateType.DEL));
                     sendCommand(command);
                     closeConnection();
                     return;
+                }
+                case CHANGE_USER_DATA -> {
+                    Command answerOfAuthService = server.getAuthService().resultOfChangeData((ChangeUserDataCommandData) command.getData());
+                    if(answerOfAuthService.getType() == CommandType.CHANGE_NICK_OK) {
+                        ChangeNickSucCommandData data = (ChangeNickSucCommandData) answerOfAuthService.getData();
+                        name = data.getNewNick();
+                        server.broadcastMessage(answerOfAuthService);
+                    } else sendCommand(answerOfAuthService);
                 }
             }
         }

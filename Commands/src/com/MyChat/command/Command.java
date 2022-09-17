@@ -80,6 +80,20 @@ public class Command implements Serializable {
         return command;
     }
 
+    public static Command changeUserDataCommand(ChangeUserDataCommandData.TypeOfData type, String value, String nick) {
+        Command command = new Command();
+        command.data = new ChangeUserDataCommandData(type, value, nick);
+        command.type = CommandType.CHANGE_USER_DATA;
+        return command;
+    }
+
+    public static Command changeNickSucCommand(String oldNick, String newNick) {
+        Command command = new Command();
+        command.data = new ChangeNickSucCommandData(oldNick, newNick);
+        command.type = CommandType.CHANGE_NICK_OK;
+        return command;
+    }
+
     public Object getData() {
         return data;
     }
