@@ -16,8 +16,6 @@ public class AuthApp extends Application {
     private Stage authStage;
     private Stage regStage;
     private static AuthApp INSTANCE;
-    private MyTimerTask timerTask;
-    private Timer timer;
 
     public static void main(String[] args) {
         launch();
@@ -38,7 +36,7 @@ public class AuthApp extends Application {
 
         stage.show();
 
-        timerStart(7000);
+        timerStart(8000);
 
         stage.setOnCloseRequest(windowEvent -> authController.disconnected());
     }
@@ -60,13 +58,13 @@ public class AuthApp extends Application {
 
     public void closeRegDialog() {
         this.regStage.close();
-        timerStart(8000);
+        timerStart(9000);
     }
 
     private void timerStart(int delay) {
-        this.timerTask = new MyTimerTask(delay);
-        this.timer = new Timer(true);
-        this.timer.schedule(this.timerTask, 0);
+        MyTimerTask timerTask = new MyTimerTask(delay);
+        Timer timer = new Timer(true);
+        timer.schedule(timerTask, 0);
     }
 
     @Override

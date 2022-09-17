@@ -1,12 +1,11 @@
 package com.MyChat.clientChat.controllers;
 
+import com.MyChat.clientChat.AuthApp;
+import com.MyChat.clientChat.ChatApp;
 import com.MyChat.clientChat.dialogs.Dialogs;
 import com.MyChat.command.Command;
 import com.MyChat.command.CommandType;
-import com.MyChat.command.commands.PrivateMessageCommandData;
-import com.MyChat.command.commands.PublicMessageCommandData;
-import com.MyChat.command.commands.UserListInitCommandData;
-import com.MyChat.command.commands.UserListUpdateCommandData;
+import com.MyChat.command.commands.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -16,6 +15,7 @@ import javafx.scene.input.MouseEvent;
 import java.io.*;
 import java.net.Socket;
 import java.text.DateFormat;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +41,9 @@ public class ChatController {
     private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
-    private Map<String, StringBuilder> entries = new HashMap<>();
+    private  final Map<String, StringBuilder> entries = new HashMap<>();
+
+    private static ChatController INSTANCE;
 
     private void setNetworkValues(String name, Socket socket, ObjectInputStream in, ObjectOutputStream out) {
         this.name = name;
@@ -51,6 +53,7 @@ public class ChatController {
     }
 
     public void start(String name, Socket socket, ObjectInputStream in, ObjectOutputStream out) {
+        INSTANCE = this;
         setNetworkValues(name, socket, in, out);
         setEntries();
         readMessage();
@@ -121,21 +124,23 @@ public class ChatController {
                         Command command = readCommand();
 
                         switch (command.getType()) {
-                            case USER_LIST_UPDATE: {
-                                updateUserList(command);
-                                break;
+                            case USER_LIST_UPDATE -> updateUserList(command);
+                            case PRIVATE_MESSAGE -> updatePrivateMessage(command);
+                            case PUBLIC_MESSAGE -> updatePublicMessage(command);
+                            case REGISTRATION_OK -> {
+                                Platform.runLater(() -> {
+                                    ChatApp.getInstance().getChangeDataStage().close();
+                                    Dialogs.ErrorType.SUCCESS_REG.show(Alert.AlertType.INFORMATION, "Your data has been successfully changes!");
+                                });
                             }
-                            case PRIVATE_MESSAGE: {
-                                updatePrivateMessage(command);
-                                break;
-                            }
-                            case PUBLIC_MESSAGE: {
-                                updatePublicMessage(command);
-                                break;
-                            }
-                            case DISCONNECT: {
+                            case CHANGE_NICK_OK -> changeNick(command);
+                            case DISCONNECT -> {
                                 disconnected();
                                 return;
+                            }
+                            case ERROR -> {
+                                ErrorCommandData data = (ErrorCommandData) command.getData();
+                                Platform.runLater(() -> Dialogs.ErrorType.REG_ERROR.show(Alert.AlertType.ERROR, data.getErrorMessage()));
                             }
                         }
                     } catch (IOException e) {
@@ -160,8 +165,8 @@ public class ChatController {
                     entries.replace(pair.getKey(), pair.getValue().append(DateFormat.getDateInstance().format(new Date()))
                             .append(System.lineSeparator()).append(pair.getKey()).append(" connected").append(System.lineSeparator())
                             .append(System.lineSeparator()));
-                    if(userList.getSelectionModel().getSelectedItem() != null && userList.getSelectionModel().getSelectedItem().toString().equals(pair.getKey())) {
-                        messageArea.setText(entries.get(pair.getValue()).toString());
+                    if(userList.getSelectionModel().getSelectedItem() != null && userList.getSelectionModel().getSelectedItem().equals(pair.getKey())) {
+                        messageArea.setText(entries.get(pair.getKey()).toString());
                     }
                     return;
                 }
@@ -170,7 +175,6 @@ public class ChatController {
             entries.put(data.getClientsName(), new StringBuilder(data.getClientsName()).append(" connected").append(System.lineSeparator())
                     .append(System.lineSeparator()));
             Platform.runLater(() -> userList.getItems().add(data.getClientsName()));
-            userList.refresh();
         } else {
             if(data.getType() == UserListUpdateCommandData.UserListUpdateType.DEL) {
                 entries.remove(data.getClientsName());
@@ -180,6 +184,7 @@ public class ChatController {
                 messageArea.setText("");
             }
         }
+        Platform.runLater(() -> userList.getItems().sort((o1, o2) -> o1.compareTo(o2)));
     }
 
     @FXML
@@ -213,6 +218,8 @@ public class ChatController {
                 .append(System.lineSeparator()).append(data.getSender() + ": " + data.getMessage()).append(System.lineSeparator()).append(System.lineSeparator());
         if(userList.getSelectionModel().getSelectedItem() != null && userList.getSelectionModel().getSelectedItem().equals("All")) {
             messageArea.setText(entries.get("All").toString());
+        } else {
+            Platform.runLater(() -> userList.getItems().set(userList.getItems().indexOf("All"), "All*"));
         }
     }
 
@@ -222,12 +229,21 @@ public class ChatController {
                 .append(System.lineSeparator()).append(data.getSender() + ": " + data.getMessage()).append(System.lineSeparator()).append(System.lineSeparator());
         if(userList.getSelectionModel().getSelectedItem() != null && userList.getSelectionModel().getSelectedItem().equals(data.getSender())) {
             messageArea.setText(entries.get(data.getSender()).toString());
+        } else {
+            Platform.runLater(() -> userList.getItems().set(userList.getItems().indexOf(data.getSender()), data.getSender() + "*"));
         }
     }
 
     @FXML
     public void shiftMessageArea(MouseEvent mouseEvent) {
-        messageArea.setText(entries.get(userList.getSelectionModel().getSelectedItem()).toString());
+        if(userList.getSelectionModel().getSelectedItem() != null) {
+            String value = userList.getSelectionModel().getSelectedItem();
+            if(value.endsWith("*")) {
+                value = value.substring(0, value.length() - 1);
+                userList.getItems().set(userList.getSelectionModel().getSelectedIndex(), value);
+            }
+            messageArea.setText(entries.get(userList.getSelectionModel().getSelectedItem()).toString());
+        }
     }
 
     private void disconnected() {
@@ -241,7 +257,74 @@ public class ChatController {
         }
     }
 
-    public void sendDisconnectCommand() {
+    public void sendExternalCommand(Command command) {
+        sendCommand(command);
+    }
+
+    public void sendDisconnectCommand(ActionEvent actionEvent) {
         sendCommand(Command.disconnectCommand());
+        AuthApp.getInstance().getAuthStage().close();
+    }
+
+    public void changeDataInitDialog(String type, String name) throws IOException{
+        ChatApp.getInstance().initDialog("ChangeDataPane-view.fxml", type, name);
+    }
+
+    public void changeNickInitDialog(ActionEvent actionEvent) {
+        try {
+            changeDataInitDialog("nick", this.name);
+        } catch (IOException e) {
+            System.err.println("Initialization dialog for changing nick error.");
+            e.printStackTrace();
+        }
+    }
+
+    public void changeLoginInitDialog(ActionEvent actionEvent) {
+        try {
+            changeDataInitDialog("login", this.name);
+        } catch (IOException e) {
+            System.err.println("Initialization dialog for changing login error.");
+            e.printStackTrace();
+        }
+    }
+
+    public void changePasswordInitDialog(ActionEvent actionEvent) {
+        try {
+            ChatApp.getInstance().initDialog("ChangePasswordPane-view.fxml", "password", this.name);
+        } catch (IOException e) {
+            System.err.println("Initialization dialog for changing login error.");
+            e.printStackTrace();
+        }
+    }
+
+    private void changeNick(Command command) {
+        ChangeNickSucCommandData data = (ChangeNickSucCommandData) command.getData();
+        Platform.runLater(() -> {
+            if(data.getOldNick().equals(name)) {
+                name = data.getNewNick();
+                userNameLabel.setText(data.getNewNick());
+                ChatApp.getInstance().getChangeDataStage().close();
+                Dialogs.ErrorType.SUCCESS_REG.show(Alert.AlertType.INFORMATION, "Your nick has been successfully changes!");
+            } else {
+                entries.put(data.getNewNick(), entries.get(data.getOldNick()).append(DateFormat.getDateInstance().format(new Date()))
+                        .append(System.lineSeparator()).append(data.getOldNick() + " renamed to " + data.getNewNick()).append(System.lineSeparator())
+                        .append(System.lineSeparator()));
+                entries.remove(data.getOldNick());
+                entries.replace("All", entries.get("All").append(DateFormat.getDateInstance().format(new Date()))
+                        .append(System.lineSeparator()).append(data.getOldNick() + " renamed to " + data.getNewNick()).append(System.lineSeparator())
+                        .append(System.lineSeparator()));
+                if(userList.getSelectionModel().getSelectedItem() != null && userList.getSelectionModel().getSelectedItem().equals(data.getOldNick())) {
+                    messageArea.setText(entries.get(data.getNewNick()).toString());
+                } else if(userList.getSelectionModel().getSelectedItem() != null && userList.getSelectionModel().getSelectedItem().
+                        equals("All")) messageArea.setText(entries.get("All").toString());
+                userList.getItems().remove(data.getOldNick());
+                userList.getItems().add(data.getNewNick());
+            }
+        });
+
+    }
+
+    public static ChatController getInstance() {
+        return INSTANCE;
     }
 }
