@@ -1,4 +1,4 @@
-package com.MyChat.clientChat;
+package com.MyChat.clientChat.Apps;
 
 import com.MyChat.clientChat.controllers.ChangeDataPaneController;
 import com.MyChat.clientChat.controllers.ChangePasswordPaneController;

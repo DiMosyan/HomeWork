@@ -1,6 +1,6 @@
 package com.MyChat.clientChat.dialogs;
 
-import com.MyChat.clientChat.AuthApp;
+import com.MyChat.clientChat.Apps.AuthApp;
 import javafx.scene.control.Alert;
 
 public class Dialogs {
@@ -11,7 +11,8 @@ public class Dialogs {
         AUTH_TIMEOUT("Time for authentication is over"),
         SEND_COMMAND_ERROR("Command sending error."),
         REG_ERROR("Registration error!"),
-        SUCCESS_REG("Registration is success!");
+        SUCCESS_REG("Registration is success!"),
+        FILE_ERROR("File error!");
 
         private final String type;
 
