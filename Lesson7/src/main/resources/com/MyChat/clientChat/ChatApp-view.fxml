@@ -31,12 +31,12 @@
                   <Insets left="5.0" />
                </HBox.margin>
             </Label>
-            <TextField fx:id="messageField" maxWidth="1.7976931348623157E308" onAction="#sendMessage" prefHeight="25.0" prefWidth="455.0">
+            <TextField fx:id="messageField" maxWidth="1.7976931348623157E308" onAction="#sendPrivateMessage" prefHeight="25.0" prefWidth="455.0">
                <HBox.margin>
                   <Insets left="5.0" right="10.0" />
                </HBox.margin>
             </TextField>
-            <Button fx:id="sendButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#sendMessage" prefHeight="25.0" prefWidth="88.0" text="Send">
+            <Button fx:id="sendButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#sendPrivateMessage" prefHeight="25.0" prefWidth="88.0" text="Send">
                <HBox.margin>
                   <Insets right="7.0" />
                </HBox.margin></Button>

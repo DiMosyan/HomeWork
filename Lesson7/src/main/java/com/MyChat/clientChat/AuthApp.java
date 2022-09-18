@@ -1,6 +1,5 @@
-package com.MyChat.clientChat.Apps;
+package com.MyChat.clientChat;
 
-import com.MyChat.clientChat.MyTimerTask;
 import com.MyChat.clientChat.controllers.AuthController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

@@ -1,7 +1,7 @@
 package com.MyChat.clientChat.controllers;
 
-import com.MyChat.clientChat.Apps.AuthApp;
-import com.MyChat.clientChat.Apps.ChatApp;
+import com.MyChat.clientChat.AuthApp;
+import com.MyChat.clientChat.ChatApp;
 import com.MyChat.clientChat.dialogs.Dialogs;
 import com.MyChat.command.Command;
 import com.MyChat.command.CommandType;
