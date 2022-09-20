@@ -1,5 +1,6 @@
-package com.MyChat.clientChat;
+package com.MyChat.clientChat.Apps;
 
+import com.MyChat.clientChat.MyTimerTask;
 import com.MyChat.clientChat.controllers.AuthController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -36,7 +37,7 @@ public class AuthApp extends Application {
 
         stage.show();
 
-        timerStart(8000);
+        timerStart(10000);
 
         stage.setOnCloseRequest(windowEvent -> authController.disconnected());
     }
@@ -58,7 +59,7 @@ public class AuthApp extends Application {
 
     public void closeRegDialog() {
         this.regStage.close();
-        timerStart(9000);
+        timerStart(11000);
     }
 
     private void timerStart(int delay) {
